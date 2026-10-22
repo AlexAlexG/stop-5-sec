@@ -9,12 +9,6 @@
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
@@ -24,13 +18,12 @@
     <div id="root"></div>
 
     <script>
-        // Простой встроенный SVG QR-код генератор для ссылок
-        const SimpleQRCodeSVG = ({ value, size = 200 }) => {
+        // Простой генератор SVG QR-кода
+        const SimpleQRCodeSVG = ({ value, size = 180 }) => {
             const moduleCount = 25;
             const cellSize = size / moduleCount;
             let cells = [];
             
-            // Генерация простой сетки на основе хэша строки для надежности отображения
             let hash = 0;
             for (let i = 0; i < value.length; i++) {
                 hash = (hash << 5) - hash + value.charCodeAt(i);
@@ -39,7 +32,6 @@
 
             for (let r = 0; r < moduleCount; r++) {
                 for (let c = 0; c < moduleCount; c++) {
-                    // Уголки для красоты QR
                     const isFinder = (r < 7 && c < 7) || (r < 7 && c >= moduleCount - 7) || (r >= moduleCount - 7 && c < 7);
                     let filled = isFinder && ((r === 0 || r === 6) && (c >= 0 && c <= 6) || (c === 0 || c === 6) && (r >= 0 && r <= 6) || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
                     
@@ -65,36 +57,31 @@
                 width: size,
                 height: size,
                 viewBox: `0 0 ${size} ${size}`,
-                className: 'bg-white p-2 rounded-2xl shadow-xl'
+                className: 'bg-white p-2 rounded-2xl shadow-xl border-4 border-indigo-500'
             }, [
                 React.createElement('rect', { width: size, height: size, fill: '#ffffff', key: 'bg' }),
                 ...cells
             ]);
         };
 
-        // Основной компонент приложения
+        // Главный компонент приложения
         function App() {
             const [view, setView] = React.useState('player'); // player, admin, bigScreen
             const [playerName, setPlayerName] = React.useState('');
             const [isRegistered, setIsRegistered] = React.useState(false);
             const [isAdminUnlocked, setIsAdminUnlocked] = React.useState(false);
-            const [pinInput, setPinInput] = React.useState('');
             
-            // Настройки игры
             const [targetTime, setTargetTime] = React.useState(5.0);
             const [maxAttempts, setMaxAttempts] = React.useState(3);
             const [blindMode, setBlindMode] = React.useState(false);
-            const [gameActive, setGameActive] = React.useState(true);
-            const [currentAppUrl, setCurrentAppUrl] = React.useState(window.location.href);
+            const [currentAppUrl] = React.useState(window.location.href);
 
-            // Состояние таймера игрока
-            const [timerState, setTimerState] = React.useState('idle'); // idle, running, stopped
+            const [timerState, setTimerState] = React.useState('idle');
             const [startTime, setStartTime] = React.useState(null);
             const [elapsed, setElapsed] = React.useState(0);
             const [attemptsLeft, setAttemptsLeft] = React.useState(3);
             const [results, setResults] = React.useState([]);
 
-            // Анимация таймера
             React.useEffect(() => {
                 let interval;
                 if (timerState === 'running') {
@@ -130,17 +117,17 @@
                 setResults(prev => [...prev, newResult].sort((a, b) => a.diff - b.diff));
             };
 
-            return React.createElement('div', { className: 'min-h-screen p-4 flex flex-col items-center justify-center max-w-md mx-auto' }, [
-                // Шапка с переключением режимов
-                React.createElement('div', { key: 'header', className: 'w-full flex justify-between items-center mb-6 bg-slate-800 p-3 rounded-xl shadow-lg' }, [
-                    React.createElement('span', { className: 'font-bold text-indigo-400' }, '⏱️ Стоп на 5 секунд'),
-                    React.createElement('div', { className: 'flex gap-2' }, [
+            return React.createElement('div', { className: 'min-h-screen p-4 flex flex-col items-center justify-start max-w-md mx-auto pt-6' }, [
+                // Меню вверху
+                React.createElement('div', { key: 'header', className: 'w-full flex justify-between items-center mb-6 bg-slate-800 p-3 rounded-2xl shadow-lg border border-slate-700' }, [
+                    React.createElement('span', { className: 'font-extrabold text-indigo-400 text-sm' }, '⏱️ СТОП 5 СЕК'),
+                    React.createElement('div', { className: 'flex gap-1.5' }, [
                         React.createElement('button', {
-                            onClick => setView('player'),
-                            className: `px-3 py-1 rounded text-sm ${view === 'player' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
+                            onClick: () => setView('player'),
+                            className: `px-3 py-1.5 rounded-xl text-xs font-bold transition ${view === 'player' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
                         }, 'Игрок'),
                         React.createElement('button', {
-                            onClick => {
+                            onClick: () => {
                                 if (!isAdminUnlocked) {
                                     const pin = prompt('Введите PIN администратора (1234):');
                                     if (pin === '1234') {
@@ -153,86 +140,88 @@
                                     setView('admin');
                                 }
                             },
-                            className: `px-3 py-1 rounded text-sm ${view === 'admin' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
+                            className: `px-3 py-1.5 rounded-xl text-xs font-bold transition ${view === 'admin' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
                         }, 'Админ'),
                         React.createElement('button', {
-                            onClick => setView('bigScreen'),
-                            className: `px-3 py-1 rounded text-sm ${view === 'bigScreen' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
+                            onClick: () => setView('bigScreen'),
+                            className: `px-3 py-1.5 rounded-xl text-xs font-bold transition ${view === 'bigScreen' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300'}`
                         }, 'Экран')
                     ])
                 ]),
 
-                // Основной контент в зависимости от экрана
+                // Экран Игрока
                 view === 'player' && React.createElement('div', { key: 'player-view', className: 'w-full flex flex-col items-center' }, [
-                    !isRegistered ? React.createElement('div', { key: 'reg', className: 'w-full bg-slate-800 p-6 rounded-2xl shadow-xl text-center' }, [
-                        React.createElement('h2', { className: 'text-xl font-bold mb-4' }, 'Представьтесь для игры'),
+                    !isRegistered ? React.createElement('div', { key: 'reg', className: 'w-full bg-slate-800 p-6 rounded-3xl shadow-xl text-center border border-slate-700 mt-4' }, [
+                        React.createElement('h2', { className: 'text-2xl font-black mb-2 text-white' }, 'Вход в игру'),
+                        React.createElement('p', { className: 'text-slate-400 text-sm mb-6' }, 'Нажми ровно на 5.000 секундах!'),
                         React.createElement('input', {
                             type: 'text',
-                            placeholder: 'Ваше имя или ник',
+                            placeholder: 'Введите ваше имя',
                             value: playerName,
                             onChange: e => setPlayerName(e.target.value),
-                            className: 'w-full p-3 bg-slate-900 border border-slate-700 rounded-xl mb-4 text-center text-white focus:outline-none focus:border-indigo-500'
+                            className: 'w-full p-4 bg-slate-900 border border-slate-700 rounded-2xl mb-4 text-center text-white font-bold text-lg focus:outline-none focus:border-indigo-500'
                         }),
                         React.createElement('button', {
                             onClick: () => {
-                                if (!playerName.trim()) return alert('Введите имя!');
+                                if (!playerName.trim()) return alert('Пожалуйста, введите имя!');
                                 setIsRegistered(true);
                             },
-                            className: 'w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition'
-                        }, 'Войти в игру')
+                            className: 'w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black rounded-2xl shadow-lg transition text-lg'
+                        }, 'Погнали!')
                     ]) : React.createElement('div', { key: 'game', className: 'w-full flex flex-col items-center' }, [
-                        React.createElement('div', { className: 'mb-4 text-slate-400' }, `Игрок: ` + React.createElement('span', { className: 'text-white font-bold' }, playerName)),
+                        React.createElement('div', { className: 'mb-4 text-slate-400 text-sm font-semibold' }, [
+                            'Игрок: ',
+                            React.createElement('span', { className: 'text-indigo-400 font-bold' }, playerName)
+                        ]),
                         
-                        // Экран таймера
-                        React.createElement('div', { className: 'w-full bg-slate-800 p-8 rounded-3xl shadow-2xl text-center mb-6 border border-slate-700' }, [
-                            React.createElement('div', { className: 'text-5xl font-black mb-2 font-mono text-indigo-400' },
+                        React.createElement('div', { className: 'w-full bg-slate-800 p-6 rounded-3xl shadow-2xl text-center mb-8 border border-slate-700' }, [
+                            React.createElement('div', { className: 'text-5xl font-black mb-2 font-mono text-indigo-400 tracking-wider' },
                                 blindMode && timerState === 'running' ? '?.???' : elapsed.toFixed(3) + 'с'
                             ),
-                            React.createElement('div', { className: 'text-sm text-slate-400' }, `Цель: ровно ${targetTime.toFixed(3)} сек`)
+                            React.createElement('div', { className: 'text-xs font-semibold text-slate-400 uppercase tracking-widest' }, `Цель: ${targetTime.toFixed(3)} сек`)
                         ]),
 
-                        // Кнопка действия
                         timerState === 'running' ? React.createElement('button', {
                             onClick: handleStopTimer,
-                            className: 'w-48 h-48 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-black text-2xl shadow-2xl shadow-rose-900/50 transition transform flex items-center justify-center mx-auto mb-6 border-4 border-rose-400'
+                            className: 'w-52 h-52 rounded-full bg-rose-600 hover:bg-rose-500 active:scale-90 text-white font-black text-3xl shadow-2xl shadow-rose-900/60 transition transform flex items-center justify-center mb-6 border-8 border-rose-400/30'
                         }, 'СТОП!') : React.createElement('button', {
                             onClick: handleStartTimer,
                             disabled: attemptsLeft <= 0,
-                            className: `w-48 h-48 rounded-full font-black text-2xl shadow-2xl transition transform flex items-center justify-center mx-auto mb-6 border-4 ${attemptsLeft > 0 ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white border-emerald-400 shadow-emerald-900/50' : 'bg-slate-700 text-slate-500 border-slate-600 cursor-not-allowed'}`
-                        }, attemptsLeft > 0 ? 'СТАРТ' : 'Попытки кончились'),
+                            className: `w-52 h-52 rounded-full font-black text-3xl shadow-2xl transition transform flex items-center justify-center mb-6 border-8 ${attemptsLeft > 0 ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white border-emerald-400/30 shadow-emerald-900/60' : 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'}`
+                        }, attemptsLeft > 0 ? 'СТАРТ' : 'ФИНИШ'),
 
-                        React.createElement('div', { className: 'text-sm text-slate-400 mb-6' }, `Осталось попыток: ${attemptsLeft} из ${maxAttempts}`),
+                        React.createElement('div', { className: 'text-xs font-bold text-slate-400 mb-6 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700' }, `Осталось попыток: ${attemptsLeft} из ${maxAttempts}`),
 
-                        // Таблица лидеров локальная
-                        React.createElement('div', { className: 'w-full bg-slate-800/50 p-4 rounded-2xl' }, [
-                            React.createElement('h3', { className: 'font-bold mb-3 text-sm text-slate-300' }, '🏆 Таблица результатов'),
-                            results.length === 0 ? React.createElement('div', { className: 'text-sm text-slate-500 text-center py-2' }, 'Пока нет результатов') :
-                            React.createElement('div', { className: 'space-y-2' }, results.slice(0, 5).map((r, idx) => 
-                                React.createElement('div', { key: r.id, className: 'flex justify-between items-center bg-slate-800 p-2.5 rounded-xl text-sm' }, [
-                                    React.createElement('span', { className: 'font-semibold text-slate-200' }, `${idx + 1}. ${r.name}`),
-                                    React.createElement('span', { className: 'font-mono text-indigo-400' }, `${r.time.toFixed(3)}с (±${r.diff.toFixed(3)})`)
+                        React.createElement('div', { className: 'w-full bg-slate-800/60 p-4 rounded-3xl border border-slate-700/50' }, [
+                            React.createElement('h3', { className: 'font-bold mb-3 text-xs text-slate-400 uppercase tracking-wider' }, 'Ваши результаты'),
+                            results.length === 0 ? React.createElement('div', { className: 'text-xs text-slate-500 text-center py-3' }, 'Нажмите СТАРТ, чтобы начать') :
+                            React.createElement('div', { className: 'space-y-2' }, results.map((r, idx) => 
+                                React.createElement('div', { key: r.id, className: 'flex justify-between items-center bg-slate-800 p-3 rounded-2xl text-xs border border-slate-700' }, [
+                                    React.createElement('span', { className: 'font-bold text-slate-200' }, `#${idx + 1} Попытка`),
+                                    React.createElement('span', { className: 'font-mono font-bold text-indigo-400' }, `${r.time.toFixed(3)}с (±${r.diff.toFixed(3)})`)
                                 ])
                             ))
                         ])
                     ])
                 ]),
 
-                view === 'admin' && React.createElement('div', { key: 'admin-view', className: 'w-full bg-slate-800 p-6 rounded-2xl shadow-xl' }, [
-                    React.createElement('h2', { className: 'text-xl font-bold mb-4 text-indigo-400' }, '⚙️ Панель администратора'),
+                // Панель Админа
+                view === 'admin' && React.createElement('div', { key: 'admin-view', className: 'w-full bg-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700' }, [
+                    React.createElement('h2', { className: 'text-xl font-black mb-4 text-indigo-400' }, '⚙️ Настройки игры'),
                     
                     React.createElement('div', { className: 'space-y-4' }, [
                         React.createElement('div', {}, [
-                            React.createElement('label', { className: 'block text-sm text-slate-400 mb-1' }, 'Целевое время (сек):'),
+                            React.createElement('label', { className: 'block text-xs font-bold text-slate-400 mb-1.5' }, 'Целевое время (сек):'),
                             React.createElement('input', {
                                 type: 'number',
                                 step: '0.1',
                                 value: targetTime,
                                 onChange: e => setTargetTime(parseFloat(e.target.value) || 5.0),
-                                className: 'w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white'
+                                className: 'w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold'
                             })
                         ]),
                         React.createElement('div', {}, [
-                            React.createElement('label', { className: 'block text-sm text-slate-400 mb-1' }, 'Количество попыток:'),
+                            React.createElement('label', { className: 'block text-xs font-bold text-slate-400 mb-1.5' }, 'Количество попыток:'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: maxAttempts,
@@ -241,11 +230,11 @@
                                     setMaxAttempts(val);
                                     setAttemptsLeft(val);
                                 },
-                                className: 'w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white'
+                                className: 'w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold'
                             })
                         ]),
-                        React.createElement('div', { className: 'flex items-center justify-between bg-slate-900 p-3 rounded-xl' }, [
-                            React.createElement('span', { className: 'text-sm text-slate-300' }, 'Слепой режим (скрывать таймер):'),
+                        React.createElement('div', { className: 'flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border border-slate-700' }, [
+                            React.createElement('span', { className: 'text-xs font-bold text-slate-300' }, 'Слепой режим (скрывать цифры):'),
                             React.createElement('input', {
                                 type: 'checkbox',
                                 checked: blindMode,
@@ -253,48 +242,41 @@
                                 className: 'w-5 h-5 accent-indigo-600'
                             })
                         ]),
-                        React.createElement('div', { className: 'pt-2' }, [
-                            React.createElement('label', { className: 'block text-sm text-slate-400 mb-1' }, 'Ссылка на игру для QR-кода:'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: currentAppUrl,
-                                onChange: e => setCurrentAppUrl(e.target.value),
-                                className: 'w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-300 mb-3'
-                            }),
-                            React.createElement('div', { className: 'flex justify-center' }, [
-                                React.createElement(SimpleQRCodeSVG, { value: currentAppUrl, size: 160 })
-                            ])
+                        React.createElement('div', { className: 'pt-2 flex flex-col items-center' }, [
+                            React.createElement('label', { className: 'block text-xs font-bold text-slate-400 mb-2' }, 'QR-код для подключения:'),
+                            React.createElement(SimpleQRCodeSVG, { value: currentAppUrl, size: 160 })
                         ]),
                         React.createElement('button', {
-                            onClick: () => { setResults([]); alert('Результаты сброшены!'); },
-                            className: 'w-full py-3 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/50 font-bold rounded-xl transition'
-                        }, 'Очистить таблицу лидеров')
+                            onClick: () => { setResults([]); alert('Таблица очищена!'); },
+                            className: 'w-full py-3 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-600/40 font-bold rounded-xl transition text-sm'
+                        }, 'Очистить результаты')
                     ])
                 ]),
 
+                // Экран Проектора
                 view === 'bigScreen' && React.createElement('div', { key: 'big-screen', className: 'w-full flex flex-col items-center' }, [
-                    React.createElement('h2', { className: 'text-2xl font-black mb-2 text-indigo-400 text-center' }, '🏆 ТАБЛИЦА ПОБЕДИТЕЛЕЙ'),
-                    React.createElement('p', { className: 'text-sm text-slate-400 mb-6 text-center' }, `Цель: ровно ${targetTime.toFixed(3)} сек`),
+                    React.createElement('h2', { className: 'text-2xl font-black mb-1 text-indigo-400 text-center tracking-tight' }, '🏆 ТАБЛИЦА ЛИДЕРОВ'),
+                    React.createElement('p', { className: 'text-xs font-bold text-slate-400 mb-6 text-center uppercase tracking-widest' }, `Цель: ${targetTime.toFixed(3)} сек`),
                     
-                    React.createElement('div', { className: 'w-full bg-slate-800 p-4 rounded-2xl shadow-xl mb-6' }, [
-                        results.length === 0 ? React.createElement('div', { className: 'text-center py-8 text-slate-500' }, 'Ожидание участников...') :
-                        React.createElement('div', { className: 'space-y-3' }, results.map((r, idx) => 
-                            React.createElement('div', { key: r.id, className: `flex justify-between items-center p-3.5 rounded-xl ${idx === 0 ? 'bg-amber-500/20 border border-amber-500/50 text-amber-300' : 'bg-slate-900 text-slate-200'}` }, [
+                    React.createElement('div', { className: 'w-full bg-slate-800 p-4 rounded-3xl shadow-xl mb-6 border border-slate-700' }, [
+                        results.length === 0 ? React.createElement('div', { className: 'text-center py-10 text-slate-500 font-bold text-sm' }, 'Ожидание участников...') :
+                        React.createElement('div', { className: 'space-y-2.5' }, results.map((r, idx) => 
+                            React.createElement('div', { key: r.id, className: `flex justify-between items-center p-3.5 rounded-2xl border ${idx === 0 ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-900 border-slate-700/60 text-slate-200'}` }, [
                                 React.createElement('div', { className: 'flex items-center gap-3' }, [
-                                    React.createElement('span', { className: 'font-black text-lg' }, `#${idx + 1}`),
-                                    React.createElement('span', { className: 'font-bold' }, r.name)
+                                    React.createElement('span', { className: 'font-black text-base' }, `#${idx + 1}`),
+                                    React.createElement('span', { className: 'font-bold text-sm' }, r.name)
                                 ]),
                                 React.createElement('div', { className: 'text-right font-mono' }, [
-                                    React.createElement('div', { className: 'font-bold text-lg' }, `${r.time.toFixed(3)}с`),
-                                    React.createElement('div', { className: 'text-xs opacity-75' }, `погрешность: ±${r.diff.toFixed(3)}с`)
+                                    React.createElement('div', { className: 'font-extrabold text-base text-indigo-400' }, `${r.time.toFixed(3)}с`),
+                                    React.createElement('div', { className: 'text-[10px] opacity-75 text-slate-400' }, `±${r.diff.toFixed(3)}с`)
                                 ])
                             ])
                         ))
                     ]),
 
-                    React.createElement('div', { className: 'bg-white p-4 rounded-2xl flex flex-col items-center' }, [
+                    React.createElement('div', { className: 'flex flex-col items-center bg-slate-800 p-4 rounded-3xl border border-slate-700 shadow-xl' }, [
                         React.createElement(SimpleQRCodeSVG, { value: currentAppUrl, size: 140 }),
-                        React.createElement('span', { className: 'text-slate-900 font-bold text-xs mt-2' }, 'Сканируй, чтобы играть!')
+                        React.createElement('span', { className: 'text-indigo-300 font-bold text-xs mt-3' }, 'Сканируй, чтобы играть!')
                     ])
                 ])
             ]);
