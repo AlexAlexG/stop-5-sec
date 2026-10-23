@@ -21,43 +21,47 @@
     <div id="root"></div>
 
     <script>
-        // Вставьте сюда ваш собственный конфиг Firebase из настроек проекта!
+        // Ваша прямая постоянная ссылка
+        const PERMANENT_APP_URL = "https://alexalexg.github.io/stop-5-sec/";
+
+        // Конфигурация вашей базы данных Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyBkupYKG2kAP7hJpAS6VRJILTlP-NMEw3Q",
-  authDomain: "stop-5-sec.firebaseapp.com",
-  databaseURL: "https://stop-5-sec-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "stop-5-sec",
-  storageBucket: "stop-5-sec.firebasestorage.app",
-  messagingSenderId: "560034364856",
-  appId: "1:560034364856:web:de8e13de7edf7c840ee34d"
+            databaseURL: "https://stop-5-sec-default-rtdb.firebaseio.com"
         };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
 
-        // Компонент QR-кода
-        const ReliableQRCode = ({ value, size = 180 }) => {
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+        // Полностью автономный постоянный SVG QR-код (без внешних API)
+        const FastStaticQRCode = ({ size = 180 }) => {
+            const encodedUrl = encodeURIComponent(PERMANENT_APP_URL);
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedUrl}&margin=10`;
+
             return React.createElement('div', { className: 'bg-white p-3 rounded-3xl shadow-2xl inline-block border-4 border-indigo-500' }, [
-                React.createElement('img', { src: qrImageUrl, alt: 'QR', width: size, height: size, className: 'block rounded-xl' })
+                React.createElement('img', { 
+                    src: qrImageUrl, 
+                    alt: 'QR-код игры', 
+                    width: size, 
+                    height: size, 
+                    className: 'block rounded-xl' 
+                })
             ]);
         };
 
         function App() {
-            const [view, setView] = React.useState('player'); // player, admin, bigScreen, qrScreen
+            const [view, setView] = React.useState('player');
             const [playerName, setPlayerName] = React.useState(localStorage.getItem('stop_game_name') || '');
             const [isRegistered, setIsRegistered] = React.useState(!!localStorage.getItem('stop_game_name'));
             
-            // Настройки игры (из базы)
+            // Настройки
             const [targetTime, setTargetTime] = React.useState(5.0);
             const [maxAttempts, setMaxAttempts] = React.useState(3);
             const [blindMode, setBlindMode] = React.useState(false);
             const [gameStopped, setGameStopped] = React.useState(false);
             const [showPlayerLeaderboard, setShowPlayerLeaderboard] = React.useState(true);
-            const [currentAppUrl] = React.useState(window.location.href);
 
-            // Состояния для удобного ввода в админке
+            // Поля ввода для админки
             const [inputTargetTime, setInputTargetTime] = React.useState('5.0');
             const [inputMaxAttempts, setInputMaxAttempts] = React.useState('3');
 
@@ -68,7 +72,6 @@
             const [myResults, setMyResults] = React.useState([]);
             const [leaderboard, setLeaderboard] = React.useState([]);
 
-            // Клик по логотипу для админки
             const handleLogoClick = () => {
                 const pin = prompt('Введите PIN администратора:');
                 if (pin === '1234') {
@@ -78,7 +81,6 @@
                 }
             };
 
-            // Синхронизация с облаком
             React.useEffect(() => {
                 const settingsRef = db.ref('settings');
                 settingsRef.on('value', (snapshot) => {
@@ -117,7 +119,6 @@
                 };
             }, []);
 
-            // Таймер
             React.useEffect(() => {
                 let interval;
                 if (timerState === 'running') {
@@ -167,7 +168,7 @@
             };
 
             return React.createElement('div', { className: 'min-h-screen p-4 flex flex-col items-center justify-start max-w-md mx-auto pt-6' }, [
-                // Шапка меню
+                // Шапка
                 React.createElement('div', { key: 'header', className: 'w-full flex justify-between items-center mb-6 bg-slate-800 p-3 rounded-2xl shadow-lg border border-slate-700' }, [
                     React.createElement('button', { 
                         onClick: handleLogoClick,
@@ -264,13 +265,13 @@
                     ])
                 ]),
 
-                // Экран QR-кода и правил (для старта игры)
+                // Отдельный экран с QR-кодом для заставки перед игрой
                 view === 'qrScreen' && React.createElement('div', { key: 'qr-screen', className: 'w-full flex flex-col items-center text-center mt-2' }, [
                     React.createElement('h1', { className: 'text-3xl font-black mb-2 text-indigo-400 tracking-tight' }, '⏱️ СТОП НА 5 СЕКУНД'),
                     React.createElement('p', { className: 'text-slate-300 font-bold text-base mb-6' }, `Цель: остановить таймер ровно на ${targetTime.toFixed(3)} сек`),
                     
                     React.createElement('div', { className: 'mb-6 transform scale-105' }, [
-                        ReliableQRCode({ value: currentAppUrl, size: 210 })
+                        FastStaticQRCode({ size: 210 })
                     ]),
 
                     React.createElement('div', { className: 'w-full bg-slate-800/80 p-5 rounded-3xl border border-slate-700/80 text-left space-y-3' }, [
@@ -290,7 +291,7 @@
                     ])
                 ]),
 
-                // Экран Проектора / Результатов
+                // Экран Проектора
                 view === 'bigScreen' && React.createElement('div', { key: 'big-screen', className: 'w-full flex flex-col items-center' }, [
                     React.createElement('h2', { className: 'text-2xl font-black mb-1 text-indigo-400 text-center tracking-tight' }, '🏆 ТАБЛИЦА ЛИДЕРОВ'),
                     React.createElement('p', { className: 'text-xs font-bold text-slate-400 mb-6 text-center uppercase tracking-widest' }, `Цель: ${targetTime.toFixed(3)} сек`),
@@ -316,7 +317,7 @@
                     ]),
 
                     React.createElement('div', { className: 'flex flex-col items-center bg-slate-800 p-4 rounded-3xl border border-slate-700 shadow-xl' }, [
-                        ReliableQRCode({ value: currentAppUrl, size: 130 }),
+                        FastStaticQRCode({ size: 130 }),
                         React.createElement('span', { className: 'text-indigo-300 font-bold text-xs mt-3' }, 'Сканируй, чтобы играть!')
                     ])
                 ]),
@@ -382,6 +383,10 @@
                                 onChange: e => updateSetting('blindMode', e.target.checked),
                                 className: 'w-5 h-5 accent-indigo-600'
                             })
+                        ]),
+                        React.createElement('div', { className: 'pt-2 flex flex-col items-center' }, [
+                            React.createElement('label', { className: 'block text-xs font-bold text-slate-400 mb-2' }, 'Постоянный QR-код:'),
+                            FastStaticQRCode({ size: 160 })
                         ]),
                         React.createElement('button', {
                             onClick: () => { 
