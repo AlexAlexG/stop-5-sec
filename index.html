@@ -21,25 +21,22 @@
     <div id="root"></div>
 
     <script>
-        // Ваша прямая постоянная ссылка
         const PERMANENT_APP_URL = "https://alexalexg.github.io/stop-5-sec/";
 
-        // Конфигурация вашей базы данных Firebase
         const firebaseConfig = {
-  apiKey: "AIzaSyBkupYKG2kAP7hJpAS6VRJILTlP-NMEw3Q",
-  authDomain: "stop-5-sec.firebaseapp.com",
-  databaseURL: "https://stop-5-sec-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "stop-5-sec",
-  storageBucket: "stop-5-sec.firebasestorage.app",
-  messagingSenderId: "560034364856",
-  appId: "1:560034364856:web:de8e13de7edf7c840ee34d"
+  apiKey: "AIzaSyBkupYKG2kAP7hJpAS6VRJILTlP-NMEw3Q",
+  authDomain: "stop-5-sec.firebaseapp.com",
+  databaseURL: "https://stop-5-sec-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "stop-5-sec",
+  storageBucket: "stop-5-sec.firebasestorage.app",
+  messagingSenderId: "560034364856",
+  appId: "1:560034364856:web:de8e13de7edf7c840ee34d"
 };
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
 
-        // Полностью автономный постоянный SVG QR-код (без внешних API)
         const FastStaticQRCode = ({ size = 180 }) => {
             const encodedUrl = encodeURIComponent(PERMANENT_APP_URL);
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedUrl}&margin=10`;
@@ -60,14 +57,12 @@
             const [playerName, setPlayerName] = React.useState(localStorage.getItem('stop_game_name') || '');
             const [isRegistered, setIsRegistered] = React.useState(!!localStorage.getItem('stop_game_name'));
             
-            // Настройки
             const [targetTime, setTargetTime] = React.useState(5.0);
             const [maxAttempts, setMaxAttempts] = React.useState(3);
             const [blindMode, setBlindMode] = React.useState(false);
             const [gameStopped, setGameStopped] = React.useState(false);
             const [showPlayerLeaderboard, setShowPlayerLeaderboard] = React.useState(true);
 
-            // Поля ввода для админки
             const [inputTargetTime, setInputTargetTime] = React.useState('5.0');
             const [inputMaxAttempts, setInputMaxAttempts] = React.useState('3');
 
@@ -271,7 +266,7 @@
                     ])
                 ]),
 
-                // Отдельный экран с QR-кодом для заставки перед игрой
+                // Экран QR-кода
                 view === 'qrScreen' && React.createElement('div', { key: 'qr-screen', className: 'w-full flex flex-col items-center text-center mt-2' }, [
                     React.createElement('h1', { className: 'text-3xl font-black mb-2 text-indigo-400 tracking-tight' }, '⏱️ СТОП НА 5 СЕКУНД'),
                     React.createElement('p', { className: 'text-slate-300 font-bold text-base mb-6' }, `Цель: остановить таймер ровно на ${targetTime.toFixed(3)} сек`),
@@ -337,17 +332,25 @@
                     
                     React.createElement('div', { className: 'space-y-4' }, [
                         React.createElement('button', {
-                            onClick: () => updateSetting('gameStopped', !gameStopped),
+                            onClick: () => {
+                                const newStatus = !gameStopped;
+                                setGameStopped(newStatus);
+                                updateSetting('gameStopped', newStatus);
+                            },
                             className: `w-full py-3.5 font-black rounded-2xl transition text-sm flex items-center justify-center gap-2 border ${gameStopped ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400' : 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400'}`
                         }, gameStopped ? '▶️ ВОЗОБНОВИТЬ ПРИЕМ ПОПЫТОК' : '⏹️ СТОП ИГРА (Заблокировать)'),
 
-                        React.createElement('div', { className: 'flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border border-slate-700' }, [
+                        React.createElement('label', { className: 'flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border border-slate-700 cursor-pointer' }, [
                             React.createElement('span', { className: 'text-xs font-bold text-slate-300' }, 'Показывать рейтинг (Игрокам и на Экране):'),
                             React.createElement('input', {
                                 type: 'checkbox',
                                 checked: showPlayerLeaderboard,
-                                onChange: e => updateSetting('showPlayerLeaderboard', e.target.checked),
-                                className: 'w-5 h-5 accent-indigo-600'
+                                onChange: e => {
+                                    const val = e.target.checked;
+                                    setShowPlayerLeaderboard(val);
+                                    updateSetting('showPlayerLeaderboard', val);
+                                },
+                                className: 'w-5 h-5 accent-indigo-600 cursor-pointer'
                             })
                         ]),
 
@@ -359,8 +362,10 @@
                                 onChange: e => setInputTargetTime(e.target.value),
                                 onBlur: e => {
                                     const val = parseFloat(e.target.value);
-                                    if (!isNaN(val) && val > 0) updateSetting('targetTime', val);
-                                    else setInputTargetTime(String(targetTime));
+                                    if (!isNaN(val) && val > 0) {
+                                        setTargetTime(val);
+                                        updateSetting('targetTime', val);
+                                    } else setInputTargetTime(String(targetTime));
                                 },
                                 className: 'w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold'
                             })
@@ -374,20 +379,25 @@
                                 onBlur: e => {
                                     const val = parseInt(e.target.value);
                                     if (!isNaN(val) && val > 0) {
-                                        updateSetting('maxAttempts', val);
+                                        setMaxAttempts(val);
                                         setAttemptsLeft(val);
+                                        updateSetting('maxAttempts', val);
                                     } else setInputMaxAttempts(String(maxAttempts));
                                 },
                                 className: 'w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold'
                             })
                         ]),
-                        React.createElement('div', { className: 'flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border border-slate-700' }, [
+                        React.createElement('label', { className: 'flex items-center justify-between bg-slate-900 p-3.5 rounded-xl border border-slate-700 cursor-pointer' }, [
                             React.createElement('span', { className: 'text-xs font-bold text-slate-300' }, 'Слепой режим (скрывать цифры):'),
                             React.createElement('input', {
                                 type: 'checkbox',
                                 checked: blindMode,
-                                onChange: e => updateSetting('blindMode', e.target.checked),
-                                className: 'w-5 h-5 accent-indigo-600'
+                                onChange: e => {
+                                    const val = e.target.checked;
+                                    setBlindMode(val);
+                                    updateSetting('blindMode', val);
+                                },
+                                className: 'w-5 h-5 accent-indigo-600 cursor-pointer'
                             })
                         ]),
                         React.createElement('div', { className: 'pt-2 flex flex-col items-center' }, [
